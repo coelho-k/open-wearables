@@ -24,6 +24,7 @@ class ProviderName(str, Enum):
     WHOOP = "whoop"
     STRAVA = "strava"
     OURA = "oura"
+    FITBIT = "fitbit"
     UNKNOWN = "unknown"
 
     @classmethod
@@ -131,6 +132,7 @@ class OAuthTokenResponse(BaseModel):
     expires_in: int
     scope: str | None = None
     x_user_id: int | None = None  # Polar-specific: user ID in Polar ecosystem
+    user_id: str | None = None  # Fitbit-specific: user ID as string in token response
 
 
 # Provider config

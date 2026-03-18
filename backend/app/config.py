@@ -98,6 +98,12 @@ class Settings(BaseSettings):
     whoop_redirect_uri: str = "http://localhost:8000/api/v1/oauth/whoop/callback"
     whoop_default_scope: str = "offline read:cycles read:sleep read:recovery read:workout"
 
+    # FITBIT OAUTH SETTINGS
+    fitbit_client_id: str | None = None
+    fitbit_client_secret: SecretStr | None = None
+    fitbit_redirect_uri: str = "http://localhost:8000/api/v1/oauth/fitbit/callback"
+    fitbit_default_scope: str = "activity heartrate sleep profile"
+
     # STRAVA OAUTH SETTINGS
     strava_client_id: str | None = None
     strava_client_secret: SecretStr | None = None
