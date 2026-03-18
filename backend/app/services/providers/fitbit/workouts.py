@@ -36,6 +36,7 @@ class FitbitWorkouts(BaseWorkoutsTemplate):
         return start_dt, end_dt
 
     def _build_metrics(self, raw: dict[str, Any]) -> EventRecordMetrics:
+        """Extract available metrics from a raw Fitbit activity record."""
         hr_avg = raw.get("averageHeartRate")
         calories = raw.get("calories")
         distance = raw.get("distance")

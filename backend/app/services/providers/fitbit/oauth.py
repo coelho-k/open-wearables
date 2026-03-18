@@ -11,6 +11,7 @@ class FitbitOAuth(BaseOAuthTemplate):
 
     @property
     def endpoints(self) -> ProviderEndpoints:
+        """OAuth endpoints for authorization and token exchange."""
         return ProviderEndpoints(
             authorize_url="https://www.fitbit.com/oauth2/authorize",
             token_url="https://api.fitbit.com/oauth2/token",
@@ -18,6 +19,7 @@ class FitbitOAuth(BaseOAuthTemplate):
 
     @property
     def credentials(self) -> ProviderCredentials:
+        """OAuth credentials from environment variables."""
         return ProviderCredentials(
             client_id=settings.fitbit_client_id or "",
             client_secret=(settings.fitbit_client_secret.get_secret_value() if settings.fitbit_client_secret else ""),

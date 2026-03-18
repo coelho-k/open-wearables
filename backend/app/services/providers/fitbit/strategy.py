@@ -7,6 +7,7 @@ class FitbitStrategy(BaseProviderStrategy):
     """Fitbit provider implementation."""
 
     def __init__(self) -> None:
+        """Initialise OAuth and workouts handlers for Fitbit."""
         super().__init__()
         self.oauth = FitbitOAuth(
             user_repo=self.user_repo,
@@ -24,8 +25,10 @@ class FitbitStrategy(BaseProviderStrategy):
 
     @property
     def name(self) -> str:
+        """Unique identifier for the provider (lowercase)."""
         return "fitbit"
 
     @property
     def api_base_url(self) -> str:
+        """Base URL for the Fitbit Web API."""
         return "https://api.fitbit.com"
