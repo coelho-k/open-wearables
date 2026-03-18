@@ -30,6 +30,10 @@ Open Wearables currently syncs **workout/activity data** from Fitbit using the A
 |--------|-------------|
 | **Polling (pull)** | Open Wearables periodically fetches activity data via the Fitbit Web API (via Celery Beat) |
 
+<Note>
+Fitbit Subscription (webhook) support is out of scope for the current integration and remains tracked in [GitHub issue #226](https://github.com/the-momentum/open-wearables/issues/226). All sync is currently polling-based.
+</Note>
+
 ## What you need by the end
 
 - **App credentials**: Client ID + Client Secret from the Fitbit Developer portal
@@ -79,18 +83,21 @@ Open Wearables currently syncs **workout/activity data** from Fitbit using the A
 FITBIT_CLIENT_ID=your-fitbit-client-id
 FITBIT_CLIENT_SECRET=your-fitbit-client-secret
 FITBIT_REDIRECT_URI=http://localhost:8000/api/v1/oauth/fitbit/callback
+# Optional: override default OAuth scopes (default: "activity heartrate sleep profile")
+FITBIT_DEFAULT_SCOPE="activity heartrate sleep profile"
 ```
 
     **Configuration details:**
 
-    | Variable | Description |
-    |----------|-------------|
-    | `FITBIT_CLIENT_ID` | Client ID from the Fitbit Developer portal |
-    | `FITBIT_CLIENT_SECRET` | Client Secret from the Fitbit Developer portal |
-    | `FITBIT_REDIRECT_URI` | Must match the Redirect URL registered in your Fitbit application. For local dev: `http://localhost:8000/api/v1/oauth/fitbit/callback` |
+    | Variable | Description | Default |
+    |----------|-------------|---------|
+    | `FITBIT_CLIENT_ID` | Client ID from the Fitbit Developer portal | — |
+    | `FITBIT_CLIENT_SECRET` | Client Secret from the Fitbit Developer portal | — |
+    | `FITBIT_REDIRECT_URI` | Must match the Redirect URL registered in your Fitbit application. For local dev: `http://localhost:8000/api/v1/oauth/fitbit/callback` | `http://localhost:8000/api/v1/oauth/fitbit/callback` |
+    | `FITBIT_DEFAULT_SCOPE` | Space-separated list of OAuth scopes to request. Only `activity` is actively synced at this time; reduce the scope to minimize consent surface if desired. | `activity heartrate sleep profile` |
 
     <Note>
-    The OAuth scopes used are `activity heartrate sleep profile`. These grant read access to activity/workout data, heart rate data, sleep data, and basic profile information. Only activity data is actively synced at this time.
+    Only `activity` data is actively synced at this time. You can reduce the requested consent surface by setting `FITBIT_DEFAULT_SCOPE="activity"`.
     </Note>
   </Step>
 
@@ -134,8 +141,8 @@ FITBIT_REDIRECT_URI=http://localhost:8000/api/v1/oauth/fitbit/callback
     An initial sync is triggered automatically after a successful OAuth connection. To manually trigger a sync:
 
     ```bash
-    # Sync all data types
-    curl -X POST "http://localhost:8000/api/v1/providers/fitbit/users/{user_id}/sync?data_type=all" \
+    # Sync workouts/activities
+    curl -X POST "http://localhost:8000/api/v1/providers/fitbit/users/{user_id}/sync?data_type=workouts" \
       -H "X-Open-Wearables-API-Key: YOUR_API_KEY"
     ```
 

@@ -22,7 +22,7 @@ RAW_ACTIVITY = {
 
 
 @pytest.fixture
-def fitbit_workouts():
+def fitbit_workouts() -> FitbitWorkouts:
     workout_repo = MagicMock()
     connection_repo = MagicMock()
     oauth = MagicMock()
@@ -35,7 +35,7 @@ def fitbit_workouts():
     )
 
 
-def test_normalize_workout_record_fields(fitbit_workouts):
+def test_normalize_workout_record_fields(fitbit_workouts: FitbitWorkouts) -> None:
     user_id = uuid4()
     record, detail = fitbit_workouts._normalize_workout(RAW_ACTIVITY, user_id)
 
@@ -47,7 +47,7 @@ def test_normalize_workout_record_fields(fitbit_workouts):
     assert record.start_datetime == datetime(2024, 1, 15, 7, 30, 0, tzinfo=timezone.utc)
 
 
-def test_normalize_workout_detail_metrics(fitbit_workouts):
+def test_normalize_workout_detail_metrics(fitbit_workouts: FitbitWorkouts) -> None:
     user_id = uuid4()
     record, detail = fitbit_workouts._normalize_workout(RAW_ACTIVITY, user_id)
 
@@ -56,14 +56,14 @@ def test_normalize_workout_detail_metrics(fitbit_workouts):
     assert detail.distance == Decimal("10.0")
 
 
-def test_normalize_workout_missing_heart_rate(fitbit_workouts):
+def test_normalize_workout_missing_heart_rate(fitbit_workouts: FitbitWorkouts) -> None:
     activity = {**RAW_ACTIVITY, "averageHeartRate": None}
     user_id = uuid4()
     record, detail = fitbit_workouts._normalize_workout(activity, user_id)
     assert detail.heart_rate_avg is None
 
 
-def test_normalize_workout_missing_source(fitbit_workouts):
+def test_normalize_workout_missing_source(fitbit_workouts: FitbitWorkouts) -> None:
     activity = {**RAW_ACTIVITY}
     del activity["source"]
     user_id = uuid4()
@@ -71,7 +71,7 @@ def test_normalize_workout_missing_source(fitbit_workouts):
     assert record.source_name == "Fitbit"
 
 
-def test_extract_dates(fitbit_workouts):
+def test_extract_dates(fitbit_workouts: FitbitWorkouts) -> None:
     start, end = fitbit_workouts._parse_fitbit_dates(
         "2024-01-15T07:30:00.000+00:00",
         3600000,

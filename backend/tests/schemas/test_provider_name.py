@@ -40,8 +40,12 @@ class TestProviderNameFromSourceString:
             ("oura_ring", ProviderName.OURA),
             ("Oura Gen 3", ProviderName.OURA),
             ("OURA", ProviderName.OURA),
-            # Unknown cases
+            # Fitbit variations
             ("fitbit", ProviderName.FITBIT),
+            ("Fitbit", ProviderName.FITBIT),
+            ("FITBIT", ProviderName.FITBIT),
+            ("fitbit_sense", ProviderName.FITBIT),
+            # Unknown cases
             ("unknown_device", ProviderName.UNKNOWN),
             ("", ProviderName.UNKNOWN),
         ],
