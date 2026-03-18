@@ -108,9 +108,7 @@ class FitbitWorkouts(BaseWorkoutsTemplate):
 
         while True:
             params["offset"] = str(offset)
-            response = self._make_api_request(
-                db, user_id, "/1/user/-/activities/list.json", params=params
-            )
+            response = self._make_api_request(db, user_id, "/1/user/-/activities/list.json", params=params)
             if not response:
                 break
             activities = response.get("activities", [])
