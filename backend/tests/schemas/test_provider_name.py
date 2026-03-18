@@ -41,7 +41,7 @@ class TestProviderNameFromSourceString:
             ("Oura Gen 3", ProviderName.OURA),
             ("OURA", ProviderName.OURA),
             # Unknown cases
-            ("fitbit", ProviderName.UNKNOWN),
+            ("fitbit", ProviderName.FITBIT),
             ("unknown_device", ProviderName.UNKNOWN),
             ("", ProviderName.UNKNOWN),
         ],
