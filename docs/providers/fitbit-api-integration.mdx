@@ -16,12 +16,19 @@ Fitbit provides access to workout/activity data from Fitbit devices through the 
 | Data Type | Support |
 |-----------|---------|
 | Workouts / Activities | Yes |
-| Sleep | Available via API - not yet implemented |
-| Heart rate (intraday) | Available via API - not yet implemented |
-| Daily activity summary | Available via API - not yet implemented |
+| Sleep sessions & stages | Yes |
+| Daily activity (steps, calories, floors, distance, active minutes) | Yes |
+| Resting heart rate | Yes |
+| Heart rate variability (HRV / RMSSD) | Yes |
+| SpO2 (blood oxygen saturation) | Yes |
+| Breathing rate | Yes |
+| Body weight & BMI | Yes |
+| Body fat percentage | Yes |
+| VO2 max (Cardio Score) | Yes |
+| Heart rate (intraday) | Requires Fitbit Personal app type — not available with Server app type |
 
 <Info>
-Open Wearables currently syncs **workout/activity data** from Fitbit using the Activities List API. Heart rate, sleep, and daily activity summary support is planned for a future release.
+Open Wearables syncs workouts, sleep, daily activity, and all available health metrics via polling. Intraday heart rate timeseries requires a Fitbit **Personal** app type — the default **Server** app type only exposes resting heart rate from the daily summary.
 </Info>
 
 ### Data delivery
@@ -83,8 +90,8 @@ Fitbit Subscription (webhook) support is out of scope for the current integratio
 FITBIT_CLIENT_ID=your-fitbit-client-id
 FITBIT_CLIENT_SECRET=your-fitbit-client-secret
 FITBIT_REDIRECT_URI=http://localhost:8000/api/v1/oauth/fitbit/callback
-# Optional: override default OAuth scopes (default: "activity heartrate sleep profile")
-FITBIT_DEFAULT_SCOPE="activity heartrate sleep profile"
+# Optional: override default OAuth scopes
+FITBIT_DEFAULT_SCOPE="activity heartrate sleep profile oxygen_saturation respiratory_rate cardio_fitness weight"
 ```
 
     **Configuration details:**
@@ -94,11 +101,8 @@ FITBIT_DEFAULT_SCOPE="activity heartrate sleep profile"
     | `FITBIT_CLIENT_ID` | Client ID from the Fitbit Developer portal | — |
     | `FITBIT_CLIENT_SECRET` | Client Secret from the Fitbit Developer portal | — |
     | `FITBIT_REDIRECT_URI` | Must match the Redirect URL registered in your Fitbit application. For local dev: `http://localhost:8000/api/v1/oauth/fitbit/callback` | `http://localhost:8000/api/v1/oauth/fitbit/callback` |
-    | `FITBIT_DEFAULT_SCOPE` | Space-separated list of OAuth scopes to request. Only `activity` is actively synced at this time; reduce the scope to minimize consent surface if desired. | `activity heartrate sleep profile` |
+    | `FITBIT_DEFAULT_SCOPE` | Space-separated list of OAuth scopes to request. Expanded to include `oxygen_saturation`, `respiratory_rate`, `cardio_fitness`, and `weight` for 247 data sync. **Existing connected users must re-authorize to grant new scopes.** | `activity heartrate sleep profile oxygen_saturation respiratory_rate cardio_fitness weight` |
 
-    <Note>
-    Only `activity` data is actively synced at this time. You can reduce the requested consent surface by setting `FITBIT_DEFAULT_SCOPE="activity"`.
-    </Note>
   </Step>
 
   <Step title="Connect a user via OAuth">
@@ -141,8 +145,16 @@ FITBIT_DEFAULT_SCOPE="activity heartrate sleep profile"
     An initial sync is triggered automatically after a successful OAuth connection. To manually trigger a sync:
 
     ```bash
-    # Sync workouts/activities
+    # Sync workouts/activities only
     curl -X POST "http://localhost:8000/api/v1/providers/fitbit/users/{user_id}/sync?data_type=workouts" \
+      -H "X-Open-Wearables-API-Key: YOUR_API_KEY"
+
+    # Sync 247 health data (sleep, activity, HRV, SpO2, body composition, VO2 max)
+    curl -X POST "http://localhost:8000/api/v1/providers/fitbit/users/{user_id}/sync?data_type=247" \
+      -H "X-Open-Wearables-API-Key: YOUR_API_KEY"
+
+    # Sync everything
+    curl -X POST "http://localhost:8000/api/v1/providers/fitbit/users/{user_id}/sync?data_type=all" \
       -H "X-Open-Wearables-API-Key: YOUR_API_KEY"
     ```
 

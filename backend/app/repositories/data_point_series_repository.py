@@ -421,6 +421,10 @@ class DataPointSeriesRepository(
         hr_id = get_series_type_id(SeriesType.heart_rate)
         distance_id = get_series_type_id(SeriesType.distance_walking_running)
         flights_id = get_series_type_id(SeriesType.flights_climbed)
+        exercise_time_id = get_series_type_id(SeriesType.exercise_time)
+        fat_burn_id = get_series_type_id(SeriesType.hr_zone_fat_burn)
+        cardio_id = get_series_type_id(SeriesType.hr_zone_cardio)
+        peak_id = get_series_type_id(SeriesType.hr_zone_peak)
 
         # Build aggregation query
         results = (
@@ -458,6 +462,21 @@ class DataPointSeriesRepository(
                 func.sum(case((self.model.series_type_definition_id == flights_id, self.model.value))).label(
                     "flights_climbed_sum"
                 ),
+                # Exercise time (minutes) - provider-reported active minutes (e.g. Fitbit fairly+very active)
+                # Used as fallback for active_minutes when per-minute step data is unavailable.
+                func.sum(case((self.model.series_type_definition_id == exercise_time_id, self.model.value))).label(
+                    "exercise_time_sum"
+                ),
+                # HR zone minutes — provider-reported (Fitbit Fat Burn / Cardio / Peak)
+                func.sum(case((self.model.series_type_definition_id == fat_burn_id, self.model.value))).label(
+                    "hr_zone_fat_burn_sum"
+                ),
+                func.sum(case((self.model.series_type_definition_id == cardio_id, self.model.value))).label(
+                    "hr_zone_cardio_sum"
+                ),
+                func.sum(case((self.model.series_type_definition_id == peak_id, self.model.value))).label(
+                    "hr_zone_peak_sum"
+                ),
             )
             .join(DataSource, self.model.data_source_id == DataSource.id)
             .filter(
@@ -465,7 +484,10 @@ class DataPointSeriesRepository(
                 self.model.recorded_at >= start_date,
                 cast(self.model.recorded_at, Date) < cast(end_date, Date),
                 self.model.series_type_definition_id.in_(
-                    [steps_id, energy_id, basal_energy_id, hr_id, distance_id, flights_id]
+                    [
+                        steps_id, energy_id, basal_energy_id, hr_id, distance_id,
+                        flights_id, exercise_time_id, fat_burn_id, cardio_id, peak_id,
+                    ]
                 ),
             )
             .group_by(
@@ -494,6 +516,18 @@ class DataPointSeriesRepository(
                     "distance_sum": float(row.distance_sum) if row.distance_sum is not None else None,
                     "flights_climbed_sum": int(row.flights_climbed_sum)
                     if row.flights_climbed_sum is not None
+                    else None,
+                    "exercise_time_sum": int(row.exercise_time_sum)
+                    if row.exercise_time_sum is not None
+                    else None,
+                    "hr_zone_fat_burn_sum": int(row.hr_zone_fat_burn_sum)
+                    if row.hr_zone_fat_burn_sum is not None
+                    else None,
+                    "hr_zone_cardio_sum": int(row.hr_zone_cardio_sum)
+                    if row.hr_zone_cardio_sum is not None
+                    else None,
+                    "hr_zone_peak_sum": int(row.hr_zone_peak_sum)
+                    if row.hr_zone_peak_sum is not None
                     else None,
                 }
             )

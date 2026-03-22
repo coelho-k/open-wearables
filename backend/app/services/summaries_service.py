@@ -548,13 +548,29 @@ class SummariesService:
             if active_cal is not None or basal_cal is not None:
                 total_cal = (active_cal or 0.0) + (basal_cal or 0.0)
 
-            # Get active/sedentary minutes
-            active_mins = activity_data.get("active_minutes")
+            # Get active/sedentary minutes.
+            # Prefer provider-reported exercise_time (e.g. Fitbit's fairly+very active minutes)
+            # over the per-minute step computation when it is available. The per-minute query
+            # returns unreliable results (always "1m") for providers that store daily totals
+            # rather than per-minute step data.
+            exercise_time_sum = result.get("exercise_time_sum")
+            active_mins = exercise_time_sum if exercise_time_sum is not None else activity_data.get("active_minutes")
             sedentary_mins = activity_data.get("sedentary_minutes")
 
-            # Get intensity minutes from HR data
-            intensity_mins = None
-            if intensity_data:
+            # Get intensity minutes.
+            # Prefer provider-reported HR zone minutes (e.g. Fitbit's Fat Burn / Cardio / Peak)
+            # over the per-minute intraday HR computation, which requires intraday HR samples
+            # that most providers (including Fitbit) do not supply via the 247 data sync.
+            fat_burn = result.get("hr_zone_fat_burn_sum")
+            cardio = result.get("hr_zone_cardio_sum")
+            peak = result.get("hr_zone_peak_sum")
+            if fat_burn is not None or cardio is not None or peak is not None:
+                intensity_mins = IntensityMinutes(
+                    light=fat_burn,
+                    moderate=cardio,
+                    vigorous=peak,
+                )
+            elif intensity_data:
                 light = intensity_data.get("light_minutes", 0)
                 moderate = intensity_data.get("moderate_minutes", 0)
                 vigorous = intensity_data.get("vigorous_minutes", 0)
@@ -563,6 +579,8 @@ class SummariesService:
                     moderate=moderate,
                     vigorous=vigorous,
                 )
+            else:
+                intensity_mins = None
 
             steps = result.get("steps_sum")
             summary = ActivitySummary(

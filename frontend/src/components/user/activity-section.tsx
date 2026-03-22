@@ -199,10 +199,10 @@ function ActivityDayRow({ summary }: { summary: ActivitySummary }) {
         {/* Date */}
         <div className="w-28 flex-shrink-0">
           <p className="text-sm font-medium text-white">
-            {format(new Date(summary.date), 'EEE, MMM d')}
+            {format(new Date(summary.date + 'T00:00:00'), 'EEE, MMM d')}
           </p>
           <p className="text-xs text-zinc-500">
-            {format(new Date(summary.date), 'yyyy')}
+            {format(new Date(summary.date + 'T00:00:00'), 'yyyy')}
           </p>
           {summary.source?.provider && (
             <SourceBadge provider={summary.source.provider} className="mt-1" />
@@ -382,9 +382,9 @@ export function ActivitySection({
     if (summaries.length === 0) return [];
 
     return [...summaries]
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .sort((a, b) => new Date(a.date + 'T00:00:00').getTime() - new Date(b.date + 'T00:00:00').getTime())
       .map((s) => ({
-        date: format(new Date(s.date), 'MMM d'),
+        date: format(new Date(s.date + 'T00:00:00'), 'MMM d'),
         value: currentMetric.getChartValue(s),
       }));
   }, [summaryData, currentMetric]);

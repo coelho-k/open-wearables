@@ -76,6 +76,10 @@ class SeriesType(str, Enum):
     physical_effort = "physical_effort"
     flights_climbed = "flights_climbed"
     average_met = "average_met"
+    # HR zone minutes — provider-reported (e.g. Fitbit Fat Burn / Cardio / Peak zones)
+    hr_zone_fat_burn = "hr_zone_fat_burn"
+    hr_zone_cardio = "hr_zone_cardio"
+    hr_zone_peak = "hr_zone_peak"
 
     # =========================================================================
     # ACTIVITY - Distance (IDs 100-119)
@@ -218,6 +222,9 @@ SERIES_TYPE_DEFINITIONS: list[tuple[int, SeriesType, str]] = [
     (85, SeriesType.physical_effort, "score"),
     (86, SeriesType.flights_climbed, "count"),
     (87, SeriesType.average_met, "met"),
+    (88, SeriesType.hr_zone_fat_burn, "minutes"),
+    (89, SeriesType.hr_zone_cardio, "minutes"),
+    (90, SeriesType.hr_zone_peak, "minutes"),
     # -------------------------------------------------------------------------
     # ACTIVITY - Distance (IDs 100-119)
     # -------------------------------------------------------------------------

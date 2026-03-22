@@ -12,8 +12,13 @@ FITBIT_ID_TO_WORKOUT_TYPE: dict[int, WorkoutType] = {
     # Cycling
     90001: WorkoutType.CYCLING,
     90024: WorkoutType.INDOOR_CYCLING,
-    # Swimming
-    82: WorkoutType.SWIMMING,
+    # Swimming — Fitbit uses several IDs depending on device and tracking method
+    82: WorkoutType.SWIMMING,   # Generic / manual log
+    20001: WorkoutType.SWIMMING,  # Pool Swimming (older Fitbit devices)
+    20004: WorkoutType.SWIMMING,  # Open Water Swimming
+    90012: WorkoutType.SWIMMING,  # SmartTrack auto-detected swim (Charge/Versa series)
+    90025: WorkoutType.SWIMMING,  # Outdoor Swimming (Versa/Sense)
+    90026: WorkoutType.SWIMMING,  # Pool Swimming (Versa/Sense)
     # Strength / Gym
     3000: WorkoutType.STRENGTH_TRAINING,
     # Yoga
@@ -40,6 +45,14 @@ FITBIT_NAME_TO_WORKOUT_TYPE: dict[str, WorkoutType] = {
     "indoor cycling": WorkoutType.INDOOR_CYCLING,
     "swim": WorkoutType.SWIMMING,
     "swimming": WorkoutType.SWIMMING,
+    "pool swim": WorkoutType.SWIMMING,
+    "pool swimming": WorkoutType.SWIMMING,
+    "open water swim": WorkoutType.SWIMMING,
+    "open water swimming": WorkoutType.SWIMMING,
+    "lap swim": WorkoutType.SWIMMING,
+    "lap swimming": WorkoutType.SWIMMING,
+    "water aerobics": WorkoutType.SWIMMING,
+    "aquatics": WorkoutType.SWIMMING,
     "yoga": WorkoutType.YOGA,
     "pilates": WorkoutType.PILATES,
     "hike": WorkoutType.HIKING,
