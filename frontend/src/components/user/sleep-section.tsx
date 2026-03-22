@@ -514,9 +514,9 @@ export function SleepSection({
     if (summaries.length === 0) return [];
 
     return [...summaries]
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .sort((a, b) => new Date(a.date + 'T00:00:00').getTime() - new Date(b.date + 'T00:00:00').getTime())
       .map((s) => ({
-        date: format(new Date(s.date), 'MMM d'),
+        date: format(new Date(s.date + 'T00:00:00'), 'MMM d'),
         value: currentMetric.getChartValue(s),
       }));
   }, [sleepSummaries, currentMetric]);

@@ -179,7 +179,7 @@ export function useSynchronizeDataFromProvider(
         queryKey: queryKeys.health.healthScores(userId),
       });
 
-      toast.success('Data synchronized successfully');
+      toast.success('Sync started — data will update in the background. Refresh in a moment.');
     },
     onError: (error: unknown) => {
       const message =

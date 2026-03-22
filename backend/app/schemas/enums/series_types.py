@@ -84,6 +84,10 @@ class SeriesType(str, Enum):
     hr_zone_peak = "hr_zone_peak"
     flights_climbed = "flights_climbed"
     average_met = "average_met"
+    # HR zone minutes — provider-reported (e.g. Fitbit Fat Burn / Cardio / Peak zones)
+    hr_zone_fat_burn = "hr_zone_fat_burn"
+    hr_zone_cardio = "hr_zone_cardio"
+    hr_zone_peak = "hr_zone_peak"
 
     # =========================================================================
     # ACTIVITY - Distance (IDs 100-119)

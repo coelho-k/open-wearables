@@ -2,6 +2,7 @@ from app.repositories.event_record_repository import EventRecordRepository
 from app.repositories.user_connection_repository import UserConnectionRepository
 from app.repositories.user_repository import UserRepository
 from app.services.providers.factory import ProviderFactory
+from app.services.providers.fitbit.data_247 import FitbitData
 from app.services.providers.fitbit.oauth import FitbitOAuth
 from app.services.providers.fitbit.strategy import FitbitStrategy
 from app.services.providers.fitbit.workouts import FitbitWorkouts
@@ -53,3 +54,14 @@ def test_fitbit_strategy_repositories() -> None:
     assert isinstance(strategy.user_repo, UserRepository)
     assert isinstance(strategy.connection_repo, UserConnectionRepository)
     assert isinstance(strategy.workout_repo, EventRecordRepository)
+
+
+def test_fitbit_strategy_has_data_247() -> None:
+    strategy = FitbitStrategy()
+    assert hasattr(strategy, "data_247")
+    assert isinstance(strategy.data_247, FitbitData)
+
+
+def test_fitbit_strategy_data_247_shares_oauth_instance() -> None:
+    strategy = FitbitStrategy()
+    assert strategy.data_247.oauth is strategy.oauth
