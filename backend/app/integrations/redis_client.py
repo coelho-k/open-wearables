@@ -1,5 +1,6 @@
 """Centralized Redis client for the application."""
 
+import os
 from functools import lru_cache
 
 import redis
@@ -9,16 +10,5 @@ from app.config import settings
 
 @lru_cache()
 def get_redis_client() -> redis.Redis:
-    """
-    Get a singleton Redis client instance.
-
-    Uses LRU cache to ensure only one Redis client instance is created
-    and reused across the application.
-
-    Returns:
-        redis.Redis: Configured Redis client instance
-    """
-    return redis.from_url(
-        settings.redis_url,
-        decode_responses=True,
-    )
+    url = os.getenv("REDIS_URL") or settings.redis_url
+    return redis.from_url(url, decode_responses=True)
