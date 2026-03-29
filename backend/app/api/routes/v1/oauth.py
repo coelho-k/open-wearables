@@ -84,17 +84,23 @@ def oauth_callback(
     assert strategy.oauth
     oauth_state = strategy.oauth.handle_callback(db, code, state)
 
-    # schedule sync task
-    sync_vendor_data.delay(
-        user_id=str(oauth_state.user_id),
-        start_date=None,
-        end_date=None,
-        providers=[provider.value],
-    )
+    # schedule sync task — non-critical, don't crash callback if Celery unavailable
+    try:
+        sync_vendor_data.delay(
+            user_id=str(oauth_state.user_id),
+            start_date=None,
+            end_date=None,
+            providers=[provider.value],
+        )
+    except Exception:
+        pass
 
     # For Garmin: Auto-trigger 30-day backfill for all backfill data types
     if provider == ProviderName.GARMIN:
-        start_garmin_full_backfill.delay(str(oauth_state.user_id))
+        try:
+            start_garmin_full_backfill.delay(str(oauth_state.user_id))
+        except Exception:
+            pass
 
     # If a specific redirect_uri was requested (e.g. by frontend), redirect there
     if oauth_state.redirect_uri:
