@@ -1,0 +1,48 @@
+# .github/workflows/deploy-ow.yml
+# Deploys Open Wearables to Azure Container Apps on push to main
+# Prerequisites: OIDC federated credential set up (see health-monitor/scripts/azure/README.md)
+# Required GitHub secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+name: Deploy Open Wearables
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+permissions:
+  id-token: write   # Required for OIDC authentication
+  contents: read
+
+env:
+  ACR_NAME: kularegistry
+  RESOURCE_GROUP: kula-prod
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure (OIDC — no stored secrets)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push to ACR
+        run: |
+          az acr build \
+            --registry ${{ env.ACR_NAME }} \
+            --image ow-api:${{ github.sha }} \
+            --image ow-api:latest \
+            --file backend/Dockerfile \
+            backend/
+
+      - name: Deploy
+        run: |
+          az containerapp update \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ow-api \
+            --image ${{ env.ACR_NAME }}.azurecr.io/ow-api:${{ github.sha }}
