@@ -106,7 +106,7 @@ class Settings(BaseSettings):
     fitbit_client_id: str | None = None
     fitbit_client_secret: SecretStr | None = None
     fitbit_redirect_uri: str = "http://localhost:8000/api/v1/oauth/fitbit/callback"
-    fitbit_default_scope: str = "activity heartrate sleep profile"
+    fitbit_default_scope: str = "activity heartrate sleep profile oxygen_saturation respiratory_rate cardio_fitness weight"
     # OURA OAUTH SETTINGS
     oura_client_id: str | None = None
     oura_client_secret: SecretStr | None = None
