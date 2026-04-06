@@ -669,6 +669,36 @@ def test_load_body_composition_fat_series_type(fitbit_data: FitbitData) -> None:
     assert fat_samples[0].value == Decimal("18.5")
 
 
+def test_load_body_composition_recorded_at_includes_time(fitbit_data: FitbitData) -> None:
+    """recorded_at must include the time component so multiple entries on the same day are not deduplicated."""
+    db = MagicMock()
+    user_id = uuid4()
+
+    def api_side_effect(_db: Any, _uid: UUID, endpoint: str, params: Any = None) -> Any:
+        if "weight" in endpoint:
+            return {"weight": [RAW_WEIGHT["weight"][0]]}  # date=2026-03-01, time=07:30:00
+        return {"fat": [RAW_FAT["fat"][0]]}  # date=2026-03-01, time=07:30:00
+
+    with (
+        patch.object(fitbit_data, "_make_api_request", side_effect=api_side_effect),
+        patch("app.services.providers.fitbit.data_247.timeseries_service") as mock_ts,
+    ):
+        fitbit_data.load_body_composition(
+            db,
+            user_id,
+            datetime(2026, 3, 1, tzinfo=timezone.utc),
+            datetime(2026, 3, 1, tzinfo=timezone.utc),
+        )
+
+    all_samples = [call[0][1] for call in mock_ts.crud.create.call_args_list]
+    for sample in all_samples:
+        # Must NOT be midnight — should preserve the 07:30:00 time from the Fitbit response
+        assert sample.recorded_at != datetime(2026, 3, 1, tzinfo=timezone.utc), (
+            "recorded_at must include the time component, not be truncated to midnight"
+        )
+        assert sample.recorded_at == datetime(2026, 3, 1, 7, 30, 0, tzinfo=timezone.utc)
+
+
 # --- Fitness metrics (VO2 max) tests ---
 
 RAW_CARDIO = {

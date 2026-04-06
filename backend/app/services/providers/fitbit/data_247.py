@@ -505,7 +505,9 @@ class FitbitData:
                 )
                 for entry in (weight_response or {}).get("weight", []):
                     try:
-                        recorded_at = datetime.strptime(entry["date"], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                        recorded_at = datetime.fromisoformat(entry["date"] + "T" + entry["time"]).replace(
+                            tzinfo=timezone.utc
+                        )
 
                         weight_val = entry.get("weight")
                         if weight_val is not None:
@@ -560,7 +562,9 @@ class FitbitData:
                 )
                 for entry in (fat_response or {}).get("fat", []):
                     try:
-                        recorded_at = datetime.strptime(entry["date"], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                        recorded_at = datetime.fromisoformat(entry["date"] + "T" + entry["time"]).replace(
+                            tzinfo=timezone.utc
+                        )
                         fat_val = entry.get("fat")
                         if fat_val is None:
                             continue
