@@ -464,8 +464,8 @@ class TestDeleteUser:
         # Assert
         assert response.status_code == 401
 
-    def test_delete_user_accepts_api_key(self, client: TestClient, db: Session, api_v1_prefix: str) -> None:
-        """Test deleting user works with API key auth."""
+    def test_delete_user_requires_bearer_token(self, client: TestClient, db: Session, api_v1_prefix: str) -> None:
+        """Test deleting user by OW UUID requires bearer token, not API key."""
         # Arrange
         developer = DeveloperFactory(email="test@example.com", password="test123")
         api_key = ApiKeyFactory(developer=developer)
@@ -475,5 +475,47 @@ class TestDeleteUser:
         # Act
         response = client.delete(f"{api_v1_prefix}/users/{user.id}", headers=headers)
 
-        # Assert - API key auth is accepted for delete
+        # Assert - API key auth is rejected; admin delete requires developer JWT
+        assert response.status_code == 401
+
+
+class TestDeleteUserByExternalId:
+    """Tests for DELETE /api/v1/users/by-external/{external_user_id}."""
+
+    def test_delete_by_external_id_success(self, client: TestClient, db: Session, api_v1_prefix: str) -> None:
+        """Test deleting user by external_user_id with API key succeeds."""
+        # Arrange
+        developer = DeveloperFactory(email="test@example.com", password="test123")
+        api_key = ApiKeyFactory(developer=developer)
+        user = UserFactory(email="user@example.com", external_user_id="kula-user-abc123")
+        headers = api_key_headers(api_key.id)
+
+        # Act
+        response = client.delete(f"{api_v1_prefix}/users/by-external/kula-user-abc123", headers=headers)
+
+        # Assert
         assert response.status_code == 200
+
+    def test_delete_by_external_id_not_found(self, client: TestClient, db: Session, api_v1_prefix: str) -> None:
+        """Test deleting non-existent external_user_id returns 404."""
+        # Arrange
+        developer = DeveloperFactory(email="test@example.com", password="test123")
+        api_key = ApiKeyFactory(developer=developer)
+        headers = api_key_headers(api_key.id)
+
+        # Act
+        response = client.delete(f"{api_v1_prefix}/users/by-external/does-not-exist", headers=headers)
+
+        # Assert
+        assert response.status_code == 404
+
+    def test_delete_by_external_id_requires_api_key(self, client: TestClient, db: Session, api_v1_prefix: str) -> None:
+        """Test deleting by external_user_id without auth is rejected."""
+        # Arrange
+        UserFactory(email="user@example.com", external_user_id="kula-user-abc123")
+
+        # Act
+        response = client.delete(f"{api_v1_prefix}/users/by-external/kula-user-abc123")
+
+        # Assert
+        assert response.status_code == 401

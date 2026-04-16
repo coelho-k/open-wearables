@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.database import DbSession
 from app.schemas.model_crud.user_management import (
@@ -60,8 +60,22 @@ def create_user(payload: UserCreate, db: DbSession, _api_key: ApiKeyDep):
 
 
 @router.delete("/users/{user_id}", response_model=UserRead)
-def delete_user(user_id: UUID, db: DbSession, _api_key: ApiKeyDep):
+def delete_user(user_id: UUID, db: DbSession, _developer: DeveloperDep):
     return user_service.delete(db, user_id, raise_404=True)
+
+
+@router.delete("/users/by-external/{external_user_id}", response_model=UserRead)
+def delete_user_by_external_id(external_user_id: str, db: DbSession, _api_key: ApiKeyDep):
+    """Delete a user by their external_user_id.
+
+    Scoped endpoint for integrating applications: you can only delete a user
+    whose external_user_id you already know (i.e. one you registered). This
+    avoids granting API keys the ability to delete arbitrary users by OW UUID.
+    """
+    result = user_service.get_users_paginated(db, UserQueryParams(external_user_id=external_user_id, limit=1))
+    if not result.items:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user_service.delete(db, result.items[0].id, raise_404=True)
 
 
 @router.patch("/users/{user_id}", response_model=UserRead)
