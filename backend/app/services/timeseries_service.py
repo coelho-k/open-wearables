@@ -144,6 +144,9 @@ class TimeSeriesService(
         data = []
         for sample, data_source in samples:
             series_type = get_series_type_from_id(sample.series_type_definition_id)
+            if series_type is None:
+                # Unknown / unmapped type_id (e.g. from removed feature). Skip.
+                continue
             unit = get_series_type_unit(series_type)
 
             # Build source from data source info if available

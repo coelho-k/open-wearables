@@ -79,6 +79,9 @@ class SeriesType(str, Enum):
     stand_time = "stand_time"
     exercise_time = "exercise_time"
     physical_effort = "physical_effort"
+    hr_zone_fat_burn = "hr_zone_fat_burn"
+    hr_zone_cardio = "hr_zone_cardio"
+    hr_zone_peak = "hr_zone_peak"
     flights_climbed = "flights_climbed"
     average_met = "average_met"
 
@@ -227,6 +230,10 @@ SERIES_TYPE_DEFINITIONS: list[tuple[int, SeriesType, str]] = [
     (85, SeriesType.physical_effort, "score"),
     (86, SeriesType.flights_climbed, "count"),
     (87, SeriesType.average_met, "met"),
+    # HR zone minutes — provider-reported (Fitbit Fat Burn / Cardio / Peak)
+    (88, SeriesType.hr_zone_fat_burn, "minutes"),
+    (89, SeriesType.hr_zone_cardio, "minutes"),
+    (90, SeriesType.hr_zone_peak, "minutes"),
     # -------------------------------------------------------------------------
     # ACTIVITY - Distance (IDs 100-119)
     # -------------------------------------------------------------------------
@@ -318,9 +325,14 @@ def get_series_type_id(series_type: SeriesType) -> int:
     return SERIES_TYPE_ID_BY_ENUM[series_type]
 
 
-def get_series_type_from_id(series_type_id: int) -> SeriesType:
-    """Get the series type enum from a database ID."""
-    return SERIES_TYPE_ENUM_BY_ID[series_type_id]
+def get_series_type_from_id(series_type_id: int) -> SeriesType | None:
+    """Get the series type enum from a database ID. Returns None for unknown IDs.
+
+    Returning None (rather than raising) prevents a single stale or unmapped
+    type_id in the data_point_series table from breaking entire timeseries
+    queries with a 500 error.
+    """
+    return SERIES_TYPE_ENUM_BY_ID.get(series_type_id)
 
 
 def get_series_type_unit(series_type: SeriesType) -> str:
