@@ -385,8 +385,8 @@ class TestUpdateUser:
         # Assert
         assert response.status_code == 401
 
-    def test_update_user_requires_bearer_token(self, client: TestClient, db: Session, api_v1_prefix: str) -> None:
-        """Test updating user requires bearer token, not API key."""
+    def test_update_user_with_api_key(self, client: TestClient, db: Session, api_v1_prefix: str) -> None:
+        """Test updating user accepts API key auth (server-to-server)."""
         # Arrange
         developer = DeveloperFactory(email="test@example.com", password="test123")
         api_key = ApiKeyFactory(developer=developer)
@@ -397,7 +397,20 @@ class TestUpdateUser:
         # Act
         response = client.patch(f"{api_v1_prefix}/users/{user.id}", json=payload, headers=headers)
 
-        # Assert - API key auth is rejected, requires bearer token
+        # Assert
+        assert response.status_code == 200
+        assert response.json()["email"] == "new@example.com"
+
+    def test_update_user_requires_auth(self, client: TestClient, db: Session, api_v1_prefix: str) -> None:
+        """Test updating user without any auth is rejected."""
+        # Arrange
+        user = UserFactory(email="user@example.com")
+        payload = {"email": "new@example.com"}
+
+        # Act
+        response = client.patch(f"{api_v1_prefix}/users/{user.id}", json=payload)
+
+        # Assert
         assert response.status_code == 401
 
 
@@ -487,7 +500,7 @@ class TestDeleteUserByExternalId:
         # Arrange
         developer = DeveloperFactory(email="test@example.com", password="test123")
         api_key = ApiKeyFactory(developer=developer)
-        user = UserFactory(email="user@example.com", external_user_id="kula-user-abc123")
+        UserFactory(email="user@example.com", external_user_id="kula-user-abc123")
         headers = api_key_headers(api_key.id)
 
         # Act
