@@ -10,9 +10,12 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.database import DbSession
 from app.repositories import UserConnectionRepository
-from app.schemas import EventRecordCreate, TimeSeriesSampleCreate
-from app.schemas.event_record_detail import EventRecordDetailCreate
-from app.schemas.series_types import SeriesType
+from app.schemas.enums.series_types import SeriesType
+from app.schemas.model_crud.activities import (
+    EventRecordCreate,
+    EventRecordDetailCreate,
+    TimeSeriesSampleCreate,
+)
 from app.services.event_record_service import event_record_service
 from app.services.providers.api_client import make_authenticated_request
 from app.services.providers.templates.base_oauth import BaseOAuthTemplate

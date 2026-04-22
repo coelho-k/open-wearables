@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.schemas.series_types import SeriesType
+from app.schemas.enums.series_types import SeriesType
 from app.services.providers.fitbit.data_247 import FitbitData
 
 
