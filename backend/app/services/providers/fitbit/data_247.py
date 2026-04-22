@@ -97,12 +97,19 @@ class FitbitData:
         # Fetch the user's timezone once so we can convert to UTC correctly.
         user_tz = self._get_user_timezone(db, user_id)
 
+        # Fitbit caps sleep/list.json at 100 rows per page. Paging asc from
+        # start_dt meant we'd fill 100 from the OLDEST day and drop off
+        # before reaching today's data for any user with >100 sessions. Go
+        # desc from end_dt and stop once we cross start_dt — recent data
+        # lands first and we don't need Fitbit's `pagination.next` URL to
+        # be populated correctly (it sometimes isn't).
         params: dict[str, Any] = {
-            "afterDate": start_dt.strftime("%Y-%m-%d"),
-            "sort": "asc",
+            "beforeDate": end_dt.strftime("%Y-%m-%d"),
+            "sort": "desc",
             "limit": "100",
             "offset": "0",
         }
+        start_date_str = start_dt.strftime("%Y-%m-%d")
         end_date_str = end_dt.strftime("%Y-%m-%d")
         offset = 0
         count = 0
@@ -114,7 +121,12 @@ class FitbitData:
                 break
 
             sessions = response.get("sleep", [])
-            in_range = [s for s in sessions if (s.get("startTime") or "")[:10] <= end_date_str]
+            # Keep only sessions inside [start_dt, end_dt]. Using desc order
+            # means anything older than start_dt tells us to stop paging.
+            in_range = [
+                s for s in sessions
+                if start_date_str <= (s.get("startTime") or "")[:10] <= end_date_str
+            ]
 
             for raw in in_range:
                 try:
@@ -186,8 +198,14 @@ class FitbitData:
                         extra={"user_id": str(user_id), "log_id": str(raw.get("logId"))},
                     )
 
-            next_page = response.get("pagination", {}).get("next", "")
-            if not next_page or not sessions or len(in_range) < len(sessions):
+            # Stop once we hit a full page of sessions older than start_dt,
+            # or Fitbit returned nothing / fewer rows than we asked for.
+            if not sessions or len(sessions) < 100:
+                break
+            # If at least one session in this page fell before start_dt we
+            # already have everything we want — no point asking for older
+            # pages.
+            if any((s.get("startTime") or "")[:10] < start_date_str for s in sessions):
                 break
             offset += len(sessions)
 
