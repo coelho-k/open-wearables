@@ -221,12 +221,17 @@ class FitbitData:
         """Fetch daily activity summaries (steps, calories, HR, etc.) and save as TimeSeriesSamples.
 
         One API request per calendar day. Both activity metrics and resting heart rate
-        are extracted from the same response.
-        Returns the number of samples saved.
+        are extracted from the same response. Uses bulk_create so that a later
+        sync with updated Fitbit values (e.g. once Fitbit finalizes a day's cumulative
+        totals) UPDATES existing rows via ON CONFLICT DO UPDATE, rather than silently
+        keeping the earlier partial value.
+
+        Returns the number of samples collected.
         """
         count = 0
         current = start_dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
         end_day = end_dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+        samples: list[TimeSeriesSampleCreate] = []
 
         while current <= end_day:
             date_str = current.strftime("%Y-%m-%d")
@@ -298,21 +303,22 @@ class FitbitData:
 
                 for field_name, series_type, value in metrics:
                     try:
-                        sample = TimeSeriesSampleCreate(
-                            id=uuid4(),
-                            user_id=user_id,
-                            source=self.provider_name,
-                            recorded_at=recorded_at,
-                            value=Decimal(str(value)),
-                            series_type=series_type,
+                        samples.append(
+                            TimeSeriesSampleCreate(
+                                id=uuid4(),
+                                user_id=user_id,
+                                source=self.provider_name,
+                                recorded_at=recorded_at,
+                                value=Decimal(str(value)),
+                                series_type=series_type,
+                            )
                         )
-                        timeseries_service.crud.create(db, sample)
                         count += 1
                     except Exception as e:
                         log_and_capture_error(
                             e,
                             self.logger,
-                            f"Fitbit daily_activity: failed to save {field_name} for {date_str}",
+                            f"Fitbit daily_activity: failed to stage {field_name} for {date_str}",
                             extra={"user_id": str(user_id), "date": date_str, "field": field_name},
                         )
 
@@ -325,6 +331,20 @@ class FitbitData:
                 )
 
             current += timedelta(days=1)
+
+        if samples:
+            try:
+                timeseries_service.crud.bulk_create(db, samples)
+                db.commit()
+            except Exception as e:
+                log_and_capture_error(
+                    e,
+                    self.logger,
+                    "Fitbit daily_activity: bulk_create failed",
+                    extra={"user_id": str(user_id), "sample_count": len(samples)},
+                )
+                db.rollback()
+                raise
 
         return count
 
