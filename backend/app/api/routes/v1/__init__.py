@@ -23,6 +23,7 @@ from .sdk_token import router as sdk_token_router
 from .seed_data import router as seed_data_router
 from .strava_webhooks import router as strava_webhooks_router
 from .summaries import router as summaries_router
+from .fitbit_debug import router as fitbit_debug_router
 from .suunto_debug import router as suunto_debug_router
 from .sync_data import router as sync_data_router
 from .timeseries import router as timeseries_router
@@ -72,5 +73,6 @@ v1_router.include_router(
 )
 v1_router.include_router(deprecated_webhooks_router, tags=["System: Provider Webhooks (Deprecated)"], deprecated=True)
 v1_router.include_router(suunto_debug_router, prefix="/debug", tags=["System: Debug"])
+v1_router.include_router(fitbit_debug_router, prefix="/debug", tags=["System: Debug"])
 
 __all__ = ["v1_router"]
