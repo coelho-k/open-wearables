@@ -47,6 +47,23 @@ def raw_profile(
     return {"fitbit_endpoint": "/1/user/-/profile.json", "response": response}
 
 
+@router.get("/users/{user_id}/raw/path")
+def raw_arbitrary_path(
+    user_id: UUID,
+    db: DbSession,
+    _api_key: ApiKeyDep,
+    fitbit_path: str,
+) -> dict[str, Any]:
+    """Hit an arbitrary Fitbit Web API path — diagnostic only.
+    Example: ?fitbit_path=/1/user/-/activities/heart/date/2026-04-22/1d.json"""
+    strategy = factory.get_provider("fitbit")
+    data_247 = getattr(strategy, "data_247", None)
+    if data_247 is None:
+        return {"error": "Fitbit data_247 strategy unavailable"}
+    response = data_247._make_api_request(db, user_id, fitbit_path)  # type: ignore[attr-defined]
+    return {"fitbit_endpoint": fitbit_path, "response": response}
+
+
 @router.get("/users/{user_id}/raw/steps/{date_str}")
 def raw_steps_intraday(
     user_id: UUID,
