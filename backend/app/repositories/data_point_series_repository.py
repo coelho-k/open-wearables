@@ -564,8 +564,16 @@ class DataPointSeriesRepository(
                 cast(self.model.recorded_at, Date) < cast(end_date, Date),
                 self.model.series_type_definition_id.in_(
                     [
-                        steps_id, energy_id, basal_energy_id, hr_id, distance_id,
-                        flights_id, exercise_time_id, fat_burn_id, cardio_id, peak_id,
+                        steps_id,
+                        energy_id,
+                        basal_energy_id,
+                        hr_id,
+                        distance_id,
+                        flights_id,
+                        exercise_time_id,
+                        fat_burn_id,
+                        cardio_id,
+                        peak_id,
                     ]
                 ),
             )
@@ -596,18 +604,12 @@ class DataPointSeriesRepository(
                     "flights_climbed_sum": int(row.flights_climbed_sum)
                     if row.flights_climbed_sum is not None
                     else None,
-                    "exercise_time_sum": int(row.exercise_time_sum)
-                    if row.exercise_time_sum is not None
-                    else None,
+                    "exercise_time_sum": int(row.exercise_time_sum) if row.exercise_time_sum is not None else None,
                     "hr_zone_fat_burn_sum": int(row.hr_zone_fat_burn_sum)
                     if row.hr_zone_fat_burn_sum is not None
                     else None,
-                    "hr_zone_cardio_sum": int(row.hr_zone_cardio_sum)
-                    if row.hr_zone_cardio_sum is not None
-                    else None,
-                    "hr_zone_peak_sum": int(row.hr_zone_peak_sum)
-                    if row.hr_zone_peak_sum is not None
-                    else None,
+                    "hr_zone_cardio_sum": int(row.hr_zone_cardio_sum) if row.hr_zone_cardio_sum is not None else None,
+                    "hr_zone_peak_sum": int(row.hr_zone_peak_sum) if row.hr_zone_peak_sum is not None else None,
                 }
             )
         return aggregates

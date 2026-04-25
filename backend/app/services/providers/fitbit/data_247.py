@@ -123,10 +123,7 @@ class FitbitData:
             sessions = response.get("sleep", [])
             # Keep only sessions inside [start_dt, end_dt]. Using desc order
             # means anything older than start_dt tells us to stop paging.
-            in_range = [
-                s for s in sessions
-                if start_date_str <= (s.get("startTime") or "")[:10] <= end_date_str
-            ]
+            in_range = [s for s in sessions if start_date_str <= (s.get("startTime") or "")[:10] <= end_date_str]
 
             for raw in in_range:
                 try:

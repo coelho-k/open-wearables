@@ -13,7 +13,7 @@ FITBIT_ID_TO_WORKOUT_TYPE: dict[int, WorkoutType] = {
     90001: WorkoutType.CYCLING,
     90024: WorkoutType.INDOOR_CYCLING,
     # Swimming — Fitbit uses several IDs depending on device and tracking method
-    82: WorkoutType.SWIMMING,   # Generic / manual log
+    82: WorkoutType.SWIMMING,  # Generic / manual log
     20001: WorkoutType.SWIMMING,  # Pool Swimming (older Fitbit devices)
     20004: WorkoutType.SWIMMING,  # Open Water Swimming
     90012: WorkoutType.SWIMMING,  # SmartTrack auto-detected swim (Charge/Versa series)
