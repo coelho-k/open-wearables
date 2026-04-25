@@ -360,7 +360,7 @@ def test_load_daily_activity_missing_summary_saves_nothing(fitbit_data: FitbitDa
         )
 
     assert count == 0
-    mock_ts.crud.create.assert_not_called()
+    mock_ts.crud.bulk_create.assert_not_called()
 
 
 def test_load_daily_activity_distance_converted_to_meters(fitbit_data: FitbitData) -> None:
