@@ -10,6 +10,7 @@ from .data_sources import router as data_sources_router
 from .deprecated_webhooks import router as deprecated_webhooks_router
 from .developers import router as developers_router
 from .events import router as events_router
+from .fitbit_debug import router as fitbit_debug_router
 from .health_scores import router as health_scores_router
 from .import_xml import router as import_xml_router
 from .invitations import router as invitations_router
@@ -23,7 +24,6 @@ from .sdk_token import router as sdk_token_router
 from .seed_data import router as seed_data_router
 from .strava_webhooks import router as strava_webhooks_router
 from .summaries import router as summaries_router
-from .fitbit_debug import router as fitbit_debug_router
 from .suunto_debug import router as suunto_debug_router
 from .sync_data import router as sync_data_router
 from .timeseries import router as timeseries_router

@@ -123,7 +123,9 @@ class Settings(BaseSettings):
     fitbit_client_id: str | None = None
     fitbit_client_secret: SecretStr | None = None
     fitbit_redirect_uri: str | None = None  # Deprecated: use API_BASE_URL
-    fitbit_default_scope: str = "activity heartrate sleep profile oxygen_saturation respiratory_rate cardio_fitness weight"
+    fitbit_default_scope: str = (
+        "activity heartrate sleep profile oxygen_saturation respiratory_rate cardio_fitness weight"
+    )
 
     # OURA OAUTH SETTINGS
     oura_client_id: str | None = None
