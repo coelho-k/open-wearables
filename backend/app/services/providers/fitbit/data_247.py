@@ -211,6 +211,117 @@ class FitbitData:
 
         return count
 
+    def load_heart_zones(
+        self,
+        db: DbSession,
+        user_id: UUID,
+        start_dt: datetime,
+        end_dt: datetime,
+    ) -> int:
+        """Fetch HR zone minutes from Fitbit's dedicated /activities/heart endpoint.
+
+        IMPORTANT: load_daily_activity reads summary.heartRateZones from
+        /1/user/-/activities/date/{date}.json — for many users that array is
+        empty. The populated zone data lives at
+        /1/user/-/activities/heart/date/{date}/1d.json under
+        activities-heart[].value.heartRateZones.
+
+        Writes one TimeSeriesSample per active zone (Fat Burn / Cardio / Peak)
+        per day at midnight UTC, using bulk_create (upsert).
+        """
+        count = 0
+        current = start_dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+        end_day = end_dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+        samples: list[TimeSeriesSampleCreate] = []
+
+        while current <= end_day:
+            date_str = current.strftime("%Y-%m-%d")
+            recorded_at = datetime(current.year, current.month, current.day, tzinfo=timezone.utc)
+
+            try:
+                response = self._make_api_request(
+                    db,
+                    user_id,
+                    f"/1/user/-/activities/heart/date/{date_str}/1d.json",
+                )
+                if not response:
+                    current += timedelta(days=1)
+                    continue
+
+                hr_entries = response.get("activities-heart", [])
+                if not hr_entries:
+                    current += timedelta(days=1)
+                    continue
+
+                value_obj = hr_entries[0].get("value", {})
+                for zone in value_obj.get("heartRateZones", []):
+                    zone_name = zone.get("name", "").lower()
+                    zone_minutes = zone.get("minutes")
+                    if zone_minutes is None:
+                        continue
+
+                    series_type: SeriesType | None = None
+                    field_name: str | None = None
+                    if "fat burn" in zone_name:
+                        series_type = SeriesType.hr_zone_fat_burn
+                        field_name = "hr_zone_fat_burn"
+                    elif "cardio" in zone_name:
+                        series_type = SeriesType.hr_zone_cardio
+                        field_name = "hr_zone_cardio"
+                    elif "peak" in zone_name:
+                        series_type = SeriesType.hr_zone_peak
+                        field_name = "hr_zone_peak"
+                    # "Out of Range" intentionally skipped — not a target zone
+
+                    if series_type is None:
+                        continue
+
+                    try:
+                        samples.append(
+                            TimeSeriesSampleCreate(
+                                id=uuid4(),
+                                user_id=user_id,
+                                source=self.provider_name,
+                                recorded_at=recorded_at,
+                                value=Decimal(str(zone_minutes)),
+                                series_type=series_type,
+                            )
+                        )
+                        count += 1
+                    except Exception as e:
+                        log_and_capture_error(
+                            e,
+                            self.logger,
+                            f"Fitbit heart_zones: failed to stage {field_name} for {date_str}",
+                            extra={"user_id": str(user_id), "date": date_str, "field": field_name},
+                        )
+
+            except Exception as e:
+                log_and_capture_error(
+                    e,
+                    self.logger,
+                    f"Fitbit heart_zones: failed to fetch data for {date_str}",
+                    extra={"user_id": str(user_id), "date": date_str},
+                )
+
+            current += timedelta(days=1)
+
+        if samples:
+            try:
+                timeseries_service.crud.bulk_create(db, samples)
+                db.commit()
+            except Exception as e:
+                log_and_capture_error(
+                    e,
+                    self.logger,
+                    "Fitbit heart_zones: bulk_create failed",
+                    extra={"user_id": str(user_id), "sample_count": len(samples)},
+                )
+                db.rollback()
+                raise
+
+        return count
+
     def load_daily_activity(
         self,
         db: DbSession,
@@ -735,6 +846,7 @@ class FitbitData:
         results: dict[str, int] = {
             "sleep_sessions_synced": 0,
             "daily_activity_samples_synced": 0,
+            "heart_zone_samples_synced": 0,
             "hrv_samples_synced": 0,
             "blood_respiratory_samples_synced": 0,
             "body_composition_samples_synced": 0,
@@ -759,6 +871,16 @@ class FitbitData:
                 self.logger,
                 "Fitbit 247 sync: daily_activity failed",
                 extra={"user_id": str(user_id), "domain": "daily_activity"},
+            )
+
+        try:
+            results["heart_zone_samples_synced"] = self.load_heart_zones(db, user_id, start_dt, end_dt)
+        except Exception as e:
+            log_and_capture_error(
+                e,
+                self.logger,
+                "Fitbit 247 sync: heart_zones failed",
+                extra={"user_id": str(user_id), "domain": "heart_zones"},
             )
 
         try:
