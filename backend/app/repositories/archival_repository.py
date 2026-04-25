@@ -206,6 +206,8 @@ class DataPointSeriesArchiveRepository:
             for row in raw_aggregates:
                 try:
                     series_type = get_series_type_from_id(row.series_type_definition_id)
+                    if series_type is None:
+                        continue
                     method = AGGREGATION_METHOD_BY_TYPE.get(series_type, AggregationMethod.AVG)
 
                     if method == AggregationMethod.SUM:

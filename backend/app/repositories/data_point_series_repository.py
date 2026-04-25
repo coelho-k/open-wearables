@@ -903,6 +903,8 @@ class DataPointSeriesRepository(
         for type_id, value, recorded_at, source, device_model in results:
             try:
                 series_type = get_series_type_from_id(type_id)
+                if series_type is None:
+                    continue
                 latest_values[series_type] = (float(value), recorded_at, source, device_model)
             except KeyError:
                 pass
@@ -954,6 +956,8 @@ class DataPointSeriesRepository(
         for type_id, avg_val, min_val, max_val, count in results:
             try:
                 series_type = get_series_type_from_id(type_id)
+                if series_type is None:
+                    continue
                 aggregates[series_type] = {
                     "avg": float(avg_val) if avg_val is not None else None,
                     "min": float(min_val) if min_val is not None else None,

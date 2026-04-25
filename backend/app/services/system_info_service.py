@@ -97,13 +97,12 @@ class SystemInfoService:
 
         # Get metrics by series type
         series_type_counts = self.timeseries_service.get_count_by_series_type(db_session)
-        top_series_types = [
-            SeriesTypeMetric(
-                series_type=get_series_type_from_id(series_type_id).value,
-                count=count,
-            )
-            for series_type_id, count in series_type_counts[:5]  # Top 5
-        ]
+        top_series_types: list[SeriesTypeMetric] = []
+        for series_type_id, count in series_type_counts[:5]:  # Top 5
+            st = get_series_type_from_id(series_type_id)
+            if st is None:
+                continue
+            top_series_types.append(SeriesTypeMetric(series_type=st.value, count=count))
 
         # Get metrics by workout type
         workout_type_counts = self.event_record_service.get_count_by_workout_type(db_session)

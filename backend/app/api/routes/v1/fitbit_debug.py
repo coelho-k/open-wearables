@@ -26,9 +26,7 @@ def raw_activities_for_date(
     data_247 = getattr(strategy, "data_247", None)
     if data_247 is None:
         return {"error": "Fitbit data_247 strategy unavailable"}
-    response = data_247._make_api_request(  # type: ignore[attr-defined]
-        db, user_id, f"/1/user/-/activities/date/{date_str}.json"
-    )
+    response = data_247._make_api_request(db, user_id, f"/1/user/-/activities/date/{date_str}.json")
     return {"fitbit_endpoint": f"/1/user/-/activities/date/{date_str}.json", "response": response}
 
 
@@ -43,7 +41,7 @@ def raw_profile(
     data_247 = getattr(strategy, "data_247", None)
     if data_247 is None:
         return {"error": "Fitbit data_247 strategy unavailable"}
-    response = data_247._make_api_request(db, user_id, "/1/user/-/profile.json")  # type: ignore[attr-defined]
+    response = data_247._make_api_request(db, user_id, "/1/user/-/profile.json")
     return {"fitbit_endpoint": "/1/user/-/profile.json", "response": response}
 
 
@@ -60,7 +58,7 @@ def raw_arbitrary_path(
     data_247 = getattr(strategy, "data_247", None)
     if data_247 is None:
         return {"error": "Fitbit data_247 strategy unavailable"}
-    response = data_247._make_api_request(db, user_id, fitbit_path)  # type: ignore[attr-defined]
+    response = data_247._make_api_request(db, user_id, fitbit_path)
     return {"fitbit_endpoint": fitbit_path, "response": response}
 
 
@@ -78,7 +76,5 @@ def raw_steps_intraday(
     data_247 = getattr(strategy, "data_247", None)
     if data_247 is None:
         return {"error": "Fitbit data_247 strategy unavailable"}
-    response = data_247._make_api_request(  # type: ignore[attr-defined]
-        db, user_id, f"/1/user/-/activities/steps/date/{date_str}/1d.json"
-    )
+    response = data_247._make_api_request(db, user_id, f"/1/user/-/activities/steps/date/{date_str}/1d.json")
     return {"fitbit_endpoint": f"/1/user/-/activities/steps/date/{date_str}/1d.json", "response": response}
