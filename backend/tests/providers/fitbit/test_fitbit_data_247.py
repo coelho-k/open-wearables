@@ -37,6 +37,7 @@ def test_load_and_save_all_returns_expected_keys(fitbit_data: FitbitData) -> Non
     with (
         patch.object(fitbit_data, "load_sleep", return_value=0),
         patch.object(fitbit_data, "load_daily_activity", return_value=0),
+        patch.object(fitbit_data, "load_heart_zones", return_value=0),
         patch.object(fitbit_data, "load_hrv", return_value=0),
         patch.object(fitbit_data, "load_blood_respiratory", return_value=0),
         patch.object(fitbit_data, "load_body_composition", return_value=0),
@@ -47,6 +48,7 @@ def test_load_and_save_all_returns_expected_keys(fitbit_data: FitbitData) -> Non
     assert set(result.keys()) == {
         "sleep_sessions_synced",
         "daily_activity_samples_synced",
+        "heart_zone_samples_synced",
         "hrv_samples_synced",
         "blood_respiratory_samples_synced",
         "body_composition_samples_synced",
@@ -61,6 +63,7 @@ def test_load_and_save_all_parses_string_start_time(fitbit_data: FitbitData) -> 
     with (
         patch.object(fitbit_data, "load_sleep", return_value=1) as mock_sleep,
         patch.object(fitbit_data, "load_daily_activity", return_value=0),
+        patch.object(fitbit_data, "load_heart_zones", return_value=0),
         patch.object(fitbit_data, "load_hrv", return_value=0),
         patch.object(fitbit_data, "load_blood_respiratory", return_value=0),
         patch.object(fitbit_data, "load_body_composition", return_value=0),
@@ -81,6 +84,7 @@ def test_load_and_save_all_domain_error_does_not_abort_others(fitbit_data: Fitbi
     with (
         patch.object(fitbit_data, "load_sleep", side_effect=Exception("boom")),
         patch.object(fitbit_data, "load_daily_activity", return_value=5),
+        patch.object(fitbit_data, "load_heart_zones", return_value=0),
         patch.object(fitbit_data, "load_hrv", return_value=0),
         patch.object(fitbit_data, "load_blood_respiratory", return_value=0),
         patch.object(fitbit_data, "load_body_composition", return_value=0),
@@ -288,9 +292,12 @@ def test_load_daily_activity_saves_samples(fitbit_data: FitbitData) -> None:
             datetime(2026, 3, 1, tzinfo=timezone.utc),
         )
 
-    # steps, energy, basal_energy, floors, distance, exercise_time, resting_hr = 7 samples
+    # steps, energy, basal_energy, floors, distance, exercise_time, resting_hr = 7 samples,
+    # collected and persisted in a single bulk_create call (upsert path).
     assert count == 7
-    assert mock_ts.crud.create.call_count == 7
+    assert mock_ts.crud.bulk_create.call_count == 1
+    batch = mock_ts.crud.bulk_create.call_args[0][1]
+    assert len(batch) == 7
 
 
 def test_load_daily_activity_skips_absent_floors(fitbit_data: FitbitData) -> None:
@@ -371,7 +378,8 @@ def test_load_daily_activity_distance_converted_to_meters(fitbit_data: FitbitDat
             datetime(2026, 3, 1, tzinfo=timezone.utc),
         )
 
-    all_samples = [call[0][1] for call in mock_ts.crud.create.call_args_list]
+    # The batch passed to bulk_create is the only call; its second positional arg is the list.
+    all_samples = mock_ts.crud.bulk_create.call_args[0][1]
     dist_samples = [s for s in all_samples if s.series_type == SeriesType.distance_walking_running]
     assert len(dist_samples) == 1
     assert dist_samples[0].value == Decimal("7500")
@@ -392,7 +400,7 @@ def test_load_daily_activity_recorded_at_is_midnight_utc(fitbit_data: FitbitData
             datetime(2026, 3, 5, tzinfo=timezone.utc),
         )
 
-    all_samples = [call[0][1] for call in mock_ts.crud.create.call_args_list]
+    all_samples = mock_ts.crud.bulk_create.call_args[0][1]
     for sample in all_samples:
         assert sample.recorded_at == datetime(2026, 3, 5, tzinfo=timezone.utc)
 
